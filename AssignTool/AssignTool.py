@@ -1,33 +1,127 @@
 import maya.cmds as cmds
 from maya.common.ui import LayoutManager
+import os.path
+import json
+
+#Location data
+filepath = cmds.file(q=True, sn=True)
+filename = filepath.split('/')[-1]
+objname = filename.split('_')[0]
+folderpath = '/'.join(filepath.split('/')[:-1])+'/'
+location = filepath.split('/')[-6]
+pubFolderpath = folderpath.split(location)[0]+'publish'+folderpath.split(location)[1]
 
 
-def getSurfacers():
-    cameraName = cmds.camera(horizontalFilmAperture=1.247, verticalFilmAperture=0.702, farClipPlane=100000)
-    #In Surfacing Maya File (WIP Folder):
-    #Upon clicking publish shaders button:
-    #Get list of assigned shaders in scene. (In either order)
-    #Get list of associated via parent objects in scene. (In either order)
-    #Loop list to create Json list of each geometry object name and shader name.
-    #Save Json file to publish/surfacing folder with +1 to version name
+def getLocalSurfacers():
+    #Should already be checked but just in case
+    if fileFormatCheck("surfacing"):
+        publishSurfaces()
+    else:
+        print("This is not a surfacing file. Please open a surfacing file to publish surfacers.")
 
-def setSurfacers():
-    cameraName = cmds.camera(horizontalFilmAperture=1.247, verticalFilmAperture=0.702, farClipPlane=100000)
-    #In Lighting Maya File (WIP Folder):
-    #Upon clicking load shaders button:
-    #Get list of geometry objects in the scene.
-    #Get Json list (from publish folder) and get list of the associated shaders
-    #Loop through scene geo list and get the associated shader (ref from published)
-    #Assign associated shader to the object.
-    #Optional: select latest button (does above) or show list of all vers for each object (within the same folder and of the same name) and select one to assign
+def publishSurfaces():
+    #get scene objects
+    theNodes = cmds.ls(dag = True, s = True, o = True)
+    list = json.loads('{"geo":"shader"}')         
+    #Go through scene
+    for shade in theNodes:
+        #Geometry
+        geo = shade.split('Shape')[0]
+        shadeEng = cmds.listConnections(shade , type = 'shadingEngine')
+        #don't get no shader objects
+        if shadeEng is None:
+            #ignore (Is there a better ay to do the reverse of this?)
+            print("ignoring "+geo)
+        else:
+            material = cmds.ls(cmds.listConnections(shadeEng), materials = True)
+            val={str(geo):str(material[0])}
+            list.update(val)
+            hyperShadePanelMenuCommand(material[0], "exportSelectedNetwork")
+    checkPrevFileExists(list)
+    
+def getPubSurfacers(state):
+    if fileFormatCheck("light"):
+        if state == "load":
+            loadSurfaces()
+        elif state == "set":
+            setSurfaces()
+    else:
+        print("This is not a lighting file. Please open a lighting file to assign surfacers.")
 
 
-def fileFormat(type):
-    if type == "surfacing":
+def loadSurfaces():
+    #get selected
+    selected = cmds.ls(sl=True,long=True)
+    if not selected==[]:
+        #get ref path of selected
+        refFolderpath = cmds.referenceQuery(selected[0][1:], filename = True)
+        #get surfacing path of selected
+        surfaceFolderpath = refFolderpath.split('model')[0]+'surfacing/'
+        #get json files
+        file_list=os.listdir(surfaceFolderpath)
+        jsonArray = []
+        for file in file_list:
+            if "json" in file:
+                jsonArray.append(file)
+        print(jsonArray[-1])
+        cmds.textField("Version", edit=True, tx=jsonArray[-1])
+        list = json.load(open(surfaceFolderpath+jsonArray[-1]))
+        print(list)
+
+    else:
+        print("Nothing selected. Please select object.")
+
+def setSurfaces():
+    print("pls")
+    
+
+        
+def sameJson(oldfile, new):
+    old = json.load(open(oldfile))
+    if old == new:
         return True
-    elif type == "lighting":
+    else:
         return False
 
+def checkPrevFileExists(list):
+    file_list=os.listdir(pubFolderpath)
+    #Check for existing json file
+    for file in file_list:
+        if "json" in file:
+            fileName = file
+    #check if prev file exists
+    if 'fileName' in locals():
+        #Check if updates have been made
+        if sameJson(pubFolderpath+fileName, list) == False:
+            version = int(fileName.split('_')[1].split('.')[0].split('v')[1])
+            with open(pubFolderpath+objname+'_v'+str(version+1)+'.json', "w") as outfile:
+                json.dump(list, outfile)
+            print("Version "+str(version+1)+" Geo/Shade Json file made")
+        else:
+            print("No changes made to shaders.")
+            #SurfaceText = cmds.textField("surfaceText", tx="No changes made to shaders.")
+    else:
+        #create first vers
+        with open(pubFolderpath+objname+'_v1.json', "w") as outfile:
+            json.dump(list, outfile)
+        print("First Geo/Shade Json file made.")
+
+
+def fileFormatCheck(type):
+    #get file directory and folder
+    fileType = filepath.split('/')[-2]    
+    if location == "wip":
+        if fileType == type:
+            return True
+        else:
+            return False
+    else:
+        if location == "publish":
+            print("Currently working in publish directory. Please change to wip.")
+        else:
+            print("Currently not working in wip directory. Please change to wip.")
+        return False
+        
 def assignTool():
     #close old windows
     if cmds.window('assignTool', exists = True):
@@ -36,20 +130,23 @@ def assignTool():
     cmds.window('assignTool', title='assignTool', resizeToFitChildren=True)
     
     with LayoutManager(cmds.columnLayout(adj=True, rowSpacing=5)) as col:
-        isSurfacing = fileFormat("surfacing") 
+        isSurfacing = fileFormatCheck("surfacing") 
         cmds.separator(h=20)
         cmds.text('Surfacing', en = isSurfacing)
-        cmds.button(label = 'Publish Shaders', command = 'getSurfacers()', en = isSurfacing)
-        #cmds.text('', id = 'publishError')
+        cmds.button(label = 'Publish Shaders', command = 'getLocalSurfacers()', en = isSurfacing)
+        #cmds.text(label='')
+        SurfaceText = cmds.textField(en=False, tx="" )
         cmds.separator(h=20)
         
-        isLighting = fileFormat("lighting") 
+        isLighting = fileFormatCheck("light") 
         cmds.text('Lighting', en = isLighting)
-        cmds.textFieldGrp(label='Version:', text="1", en = isLighting)
-        cmds.button(label = 'Assign Shaders', command = 'setSurfacers()', en = isLighting)
+        cmds.button(l = 'Get Selected Latest Shader', command = 'getPubSurfacers("load")', en = isLighting)
+        #cmds.textFieldGrp(label='Version:', text="1", en = isLighting)
+        cmds.textField('Version', text="", en = isLighting)
+        cmds.button(l = 'Assign Shaders', command = 'getPubSurfacers("set")', en = isLighting)
         #cmds.text('')
         cmds.separator(h=20)
-    
+        #cmds.text("...")
         cmds.showWindow('assignTool')
 
 assignTool()
