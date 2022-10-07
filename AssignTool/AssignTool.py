@@ -11,6 +11,7 @@ folderpath = '/'.join(filepath.split('/')[:-1])+'/'
 location = filepath.split('/')[-6]
 pubFolderpath = folderpath.split(location)[0]+'publish'+folderpath.split(location)[1]
 
+
 def getLocalSurfacers():
     #Should already be checked but just in case
     if fileFormatCheck("surfacing"):
@@ -21,9 +22,9 @@ def getLocalSurfacers():
 def publishSurfaces():
     #get scene objects
     theNodes = cmds.ls(dag = True, s = True, o = True)
-    #shaderFile = filename.split('surface')[0]+'shader'+filename.split('surface')[1]
-    list = json.loads('{"geo":"shader"}')  
-    #list = json.loads('{"'+filename+'":"'+shaderFile+'"}')      
+    #TO DO: need shaderfile to update with vers
+    shaderFile = filename.split('surface')[0]+'shader'+filename.split('surface')[1]
+    list = json.loads('{"'+filename+'":"'+shaderFile+'"}')      
     #Go through scene
     for shade in theNodes:
         #Geometry
@@ -31,14 +32,84 @@ def publishSurfaces():
         shadeEng = cmds.listConnections(shade , type = 'shadingEngine')
         #don't get no shader objects
         if shadeEng is None:
-            #ignore (Is there a better ay to do the reverse of this?)
+            #ignore (TO DO: Is there a better ay to do the reverse of this?)
             print("ignoring "+geo)
         else:
             material = cmds.ls(cmds.listConnections(shadeEng), materials = True)
             val={str(geo):str(material[0])}
             list.update(val)
     checkPrevFileAndSave(list)
-    
+
+def checkPrevFileAndSave(list):
+    #TO DO: need to create a check for folders/create (material, source, textures)
+    file_list=os.listdir(pubFolderpath+'material/')
+    #Check for existing json file
+    for file in file_list:
+        if "json" in file:
+            fileName = file
+    #check if prev file exists
+    if 'fileName' in locals():
+        #Check if updates have been made
+        if sameJson(pubFolderpath+'material/'+fileName, list) == False:
+            version = int(fileName.split('_')[2].split('.')[0].split('v')[1]) 
+            #JSON
+            with open(pubFolderpath+'material/'+objname+'_shaderList'+'_v'+str(version+1)+'.json', "w") as outfile:
+                json.dump(list, outfile)
+            print("Version "+str(version+1)+" Geo/Shade Json file made.")
+                        #SHADERS
+            #save shader export (TO DO: need to find way to do 002)
+            newfilepath = pubFolderpath+'material/'+objname+"_shader.v"+str(int(filename.split('.')[1].split('v')[1])+1)
+            cmds.file(rename = newfilepath)
+            #cmds.file(s=True,f=True)    
+            print("Version "+str(0)+" maya wip and publish file made.")
+            #MAYA
+            #new vers in wip and publish
+            #save maya file(TO DO: need to find way to do 002)
+            #PUB
+            newfilepath = pubFolderpath+'source/'+objname+"_surface.v"+str(0)
+            cmds.file(rename = newfilepath)
+            cmds.file(s=True,f=True)
+            #WIP
+            newfilepath = folderpath+objname+"_surface.v"+str(0)
+            cmds.file(rename = newfilepath)
+            cmds.file(s=True,f=True)
+            print("Version "+str(0)+" maya wip and publish file made.")
+            #save published file
+            #newShaderfilepath = pubFolderpath+'material/'+filename.split('surface')[0]+'shader'+newfilepath.split('surface')[1]
+            #cmds.file(rename = newShaderfilepath)
+            #cmds.file(s=True, f=True)
+            #reopen wip surface file
+            #cmds.file(newfilepath+".mb", open=True )
+        else:
+            print("No changes made to shaders.")
+            #SurfaceText = cmds.textField("surfaceText", tx="No changes made to shaders.")
+    else:
+        #create first vers json
+        #FIRST JSON
+        with open(pubFolderpath+'material/'+objname+'_shaderList_v001.json', "w") as outfile:
+            json.dump(list, outfile)
+        #save maya file with shaders
+        newfilepath = pubFolderpath+'material/'+objname+"_shader.v001.mb"
+        #save new wip file
+        cmds.file(rename = newfilepath)
+        cmds.file(s=True,f=True)
+        #save published file
+        #newShaderfilepath = pubFolderpath+'material/'+filename.split('surface')[0]+'shader'+newfilepath.split('surface')[1]
+        #cmds.file(rename = newShaderfilepath)
+        #cmds.file(s=True, f=True)
+        #reopen wip surface file
+        #cmds.file(newfilepath+".mb", open=True )
+        print("First Geo/Shade Json file made, new wip and updated published maya files made.")
+   #need to update window- assignTool()
+
+
+def sameJson(oldfile, new):
+    old = json.load(open(oldfile))
+    if old == new:
+        return True
+    else:
+        return False
+
 def getPubSurfacers(state):
     if fileFormatCheck("light"):
         if state == "load":
@@ -56,7 +127,7 @@ def loadSurfaces():
         #get ref path of selected
         refFolderpath = cmds.referenceQuery(selected[0][1:], filename = True)
         #get surfacing path of selected
-        surfaceFolderpath = refFolderpath.split('model')[0]+'surfacing/'
+        surfaceFolderpath = refFolderpath.split('model')[0]+'surfacing/material/'
         #get json files
         file_list=os.listdir(surfaceFolderpath)
         jsonArray = []
@@ -73,52 +144,8 @@ def loadSurfaces():
 
 def setSurfaces():
     print("pls")
+   #need to update window- assignTool()
     
-
-        
-def sameJson(oldfile, new):
-    old = json.load(open(oldfile))
-    if old == new:
-        return True
-    else:
-        return False
-
-def checkPrevFileAndSave(list):
-    #need to create a check for folders/create (material, source, textures)
-    file_list=os.listdir(pubFolderpath+'material/')
-    #Check for existing json file
-    for file in file_list:
-        if "json" in file:
-            fileName = file
-    #check if prev file exists
-    if 'fileName' in locals():
-        #Check if updates have been made
-        if sameJson(pubFolderpath+'material/'+fileName, list) == False:
-            version = int(fileName.split('_')[2].split('.')[0].split('v')[1])
-            with open(pubFolderpath+'material/'+objname+'_shaderList'+'_v'+str(version+1)+'.json', "w") as outfile:
-                json.dump(list, outfile)
-            #save maya file with shaders
-            cmds.file(rename = pubFolderpath+'material/'+filename.split('surface')[0]+'shader'+filename.split('surface')[1])
-            cmds.file(f=True, stx=True, s=True)
-            print("Version "+str(version+1)+" Geo/Shade Json file made")
-        else:
-            print("No changes made to shaders.")
-            #SurfaceText = cmds.textField("surfaceText", tx="No changes made to shaders.")
-    else:
-        #create first vers
-        with open(pubFolderpath+'material/'+objname+'_shaderList'+'_v1.json', "w") as outfile:
-            json.dump(list, outfile)
-        #save maya file with shaders
-        #wip file (not currently making vers
-        #cmds.file(s=True,f=True)
-        #published file
-        cmds.file(rename = pubFolderpath+'material/'+filename.split('surface')[0]+'shader'+filename.split('surface')[1])
-        #cmds.file(stx=True)
-        cmds.file(s=True)
-        #reopen wip surface file
-        #cmds.file( filepath, open=True )
-        print("First Geo/Shade Json file made.")
-
 
 def fileFormatCheck(type):
     #get file directory and folder
