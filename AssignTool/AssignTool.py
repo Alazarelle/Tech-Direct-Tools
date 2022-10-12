@@ -56,24 +56,42 @@ def checkPrevFileAndSave(list):
             with open(pubFolderpath+'material/'+objname+'_shaderList'+'_v'+str(version+1)+'.json', "w") as outfile:
                 json.dump(list, outfile)
             print("Version "+str(version+1)+" Geo/Shade Json file made.")
-                        #SHADERS
-            #save shader export (TO DO: need to find way to do 002)
-            newfilepath = pubFolderpath+'material/'+objname+"_shader.v"+str(int(filename.split('.')[1].split('v')[1])+1)
-            cmds.file(rename = newfilepath)
-            #cmds.file(s=True,f=True)    
-            print("Version "+str(0)+" maya wip and publish file made.")
+            #SHADERS
+             #save shader export (TO DO: need to find way to do 002)
+            file_list=os.listdir(pubFolderpath+'material/')
+             #Check for existing json file
+            for file in file_list:
+                if "shader" in file:
+                    shaderFile = file
+                    shaderVers = int(shaderFile.split('_')[2].split('.')[0].split('v')[1])
+            #check if prev file exists
+            newfilepath = pubFolderpath+'source/'+objname+"_surface.v"
+            if 'surfaceFile' in locals():
+                cmds.file(rename = newfilepath+surfaceVers)
+                cmds.file(s=True,f=True)
+                print("Version "+str(shaderVers+1)+" shader published file made.")
+            else:
+                cmds.file(rename = newfilepath+"1")
+                cmds.file(s=True,f=True)
+                print("First version shader published file made.")
             #MAYA
-            #new vers in wip and publish
-            #save maya file(TO DO: need to find way to do 002)
-            #PUB
-            newfilepath = pubFolderpath+'source/'+objname+"_surface.v"+str(0)
-            cmds.file(rename = newfilepath)
-            cmds.file(s=True,f=True)
-            #WIP
-            newfilepath = folderpath+objname+"_surface.v"+str(0)
-            cmds.file(rename = newfilepath)
-            cmds.file(s=True,f=True)
-            print("Version "+str(0)+" maya wip and publish file made.")
+             #PUB
+            file_list=os.listdir(pubFolderpath+'source/')
+             #Check for existing json file
+            for file in file_list:
+                if "surface" in file:
+                    surfaceFile = file
+                    surfaceVers = int(surfaceFile.split('_')[2].split('.')[0].split('v')[1])
+             #check if prev file exists
+            newfilepath = pubFolderpath+'source/'+objname+"_surface.v"
+            if 'surfaceFile' in locals():
+                cmds.file(rename = newfilepath+surfaceVers)
+                cmds.file(s=True,f=True)
+                print("Version "+str(surfaceVers+1)+" published maya file made.")
+            else:
+                cmds.file(rename = newfilepath+"1")
+                cmds.file(s=True,f=True)
+                print("First version published maya file made.")
             #save published file
             #newShaderfilepath = pubFolderpath+'material/'+filename.split('surface')[0]+'shader'+newfilepath.split('surface')[1]
             #cmds.file(rename = newShaderfilepath)
