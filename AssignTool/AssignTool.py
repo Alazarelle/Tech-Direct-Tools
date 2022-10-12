@@ -42,11 +42,10 @@ def checkPrevFileAndSave(list):
     print("")
     #TO DO: need to create a check for folders/create (material, source, textures)
     file_list=os.listdir(pubFolderpath+'material/')
-   #JSON
+   #Check for Previous JSON files
     for file in file_list:
         if "json" in file:
             fileName = file
-    #check if prev json file exists
     if 'fileName' in locals():
         #Check if updates have been made
         if sameJson(pubFolderpath+'material/'+fileName, list) == False:  
@@ -75,9 +74,9 @@ def checkPrevFileAndSave(list):
             print("Version "+str(surfaceVers+1)+" Surface maya file made.")
             
             #JSON
-            version = int(fileName.split('_')[2].split('.')[0].split('v')[1]) 
+            version = int(fileName.split('_')[2].split('.')[0].split('v')[1])
+            list.update({str(surfaceName):str(shaderName)})
             with open(pubFolderpath+'material/'+objname+'_shaderList'+'_v'+str(version+1)+'.json', "w") as outfile:
-                json.loads('{"'+surfaceName+'":"'+shaderName+'"}')
                 json.dump(list, outfile)
             print("Version "+str(version+1)+" Geo/Shade Json file made.")
             
@@ -112,8 +111,8 @@ def checkPrevFileAndSave(list):
         print("First version surface published file made.")
         
         #FIRST JSON
+        list.update({str(surfaceName):str(shaderName)})
         with open(pubFolderpath+'material/'+objname+'_shaderList_v001.json', "w") as outfile:
-            json.loads('{"'+surfaceName+'":"'+shaderName+'"}')
             json.dump(list, outfile)
         print("First version of shader json List published file made.")
     print("")
