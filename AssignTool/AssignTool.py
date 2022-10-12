@@ -149,17 +149,24 @@ def loadSurfaces():
         for file in file_list:
             if "json" in file:
                 jsonArray.append(file)
-        print(jsonArray[-1])
         cmds.textField("Version", edit=True, tx=jsonArray[-1])
-        list = json.load(open(surfaceFolderpath+jsonArray[-1]))
-        print(list)
+
 
     else:
         print("Nothing selected. Please select object.")
 
 def setSurfaces():
-    print("pls")
-   #need to update window- assignTool()
+    list = json.load(open(surfaceFolderpath+"val"))
+    #get specific shader maya file
+    for geo, shader in list.items():
+        shaderSource = shader
+    print(shaderSource)
+    #Get shaders from file
+    #Loop through List and apply shaders
+    for geo, shader in list.items():
+        #where geo == this file's geo
+        #where shader == shaderSources' shader
+        #assign
     
 
 def fileFormatCheck(type):
