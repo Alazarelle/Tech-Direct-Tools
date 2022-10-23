@@ -202,7 +202,7 @@ def assignTool():
         cmds.button(l = 'Get Selected Shaders', command = 'GetSurfaceList()', en = isLighting)
         cmds.optionMenu('shaderVersList', en = isLighting)
         shaderList = ""
-        cmds.button(l = 'Set Selected Version Shader', command = 'setSurfaces()', en = isLighting)
+        cmds.button(l = 'Assign Shader Version to Selected', command = 'setSurfaces()', en = isLighting)
         cmds.separator(h=20)
         if warned == False: cmds.showWindow('assignTool')
 
