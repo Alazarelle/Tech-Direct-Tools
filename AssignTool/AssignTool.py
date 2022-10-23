@@ -171,29 +171,31 @@ def setSurfaces():
                     sceneGeo = geo.split(':')[0]+":"
             #get path
             shaderFolderpath = getSelShaderPath()
-            shaderList = json.load(open(shaderFolderpath+shaderVers))
-            #get and import associated shader file
-            file_list=os.listdir(shaderFolderpath)
-            obj = shaderVers.split('_')[0]
-            vers = shaderVers.split('v')[-1].split('.')[0]
-            namespace = shaderVers.split('.')[0]
-            for file in file_list:
-                if "shader." in file:
-                    if vers in file:
-                        shaderFile = file
-            importedShaders = cmds.file(shaderFolderpath+shaderFile, i=True, mergeNamespacesOnClash=True, namespace=namespace)
-            for geo, shader in shaderList.items():
-                #Select proper Geo and assign shader
-                if cmds.ls(sceneGeo+geo) == [] and warned == False:
-                    print(sceneGeo+geo)
-                    warned = True
-                    cmds.confirmDialog( title='Warning', message="This object's model and/or names are not set up correctly for shaders.")
-                else:
-                    print(len(cmds.ls(sceneGeo+geo)))
-                    print(sceneGeo+geo)
-                    cmds.select(cmds.ls(sceneGeo+geo)[0])
-                    cmds.hyperShade(assign = (namespace+":"+shader))
-
+            if os.path.exists(shaderFolderpath+shaderVers):
+                shaderList = json.load(open(shaderFolderpath+shaderVers))
+                #get and import associated shader file
+                file_list=os.listdir(shaderFolderpath)
+                obj = shaderVers.split('_')[0]
+                vers = shaderVers.split('v')[-1].split('.')[0]
+                namespace = shaderVers.split('.')[0]
+                for file in file_list:
+                    if "shader." in file:
+                        if vers in file:
+                            shaderFile = file
+                importedShaders = cmds.file(shaderFolderpath+shaderFile, i=True, mergeNamespacesOnClash=True, namespace=namespace)
+                for geo, shader in shaderList.items():
+                    #Select proper Geo and assign shader
+                    if cmds.ls(sceneGeo+geo) == [] and warned == False:
+                        print(sceneGeo+geo)
+                        warned = True
+                        cmds.confirmDialog( title='Warning', message="This object's model and/or names are not set up correctly for shaders.")
+                    else:
+                        print(len(cmds.ls(sceneGeo+geo)))
+                        print(sceneGeo+geo)
+                        cmds.select(cmds.ls(sceneGeo+geo)[0])
+                        cmds.hyperShade(assign = (namespace+":"+shader))
+            else:
+                cmds.confirmDialog( title='Warning', message="The shaderList is not applicable to selected. Have you selected a different model?")
     else:
         cmds.confirmDialog( title='Warning', message="This is not a lighting file. Please open a lighting file to assign surfacers.")
     
